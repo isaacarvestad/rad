@@ -1,4 +1,4 @@
-use crate::graph::Graph;
+use petgraph::graph::{NodeIndex, UnGraph};
 
 /// Answers lowest common ancestor queries in O(log n) time.
 #[derive(Debug)]
@@ -23,30 +23,31 @@ impl LCA {
 
     /// Construct a LCA data structure given an undirected graph representing a
     /// tree (no cycles) and a vertex to root the tree from.
-    pub fn new(graph: Graph, root: usize) -> Self {
-        let levels = LCA::log2(graph.size());
+    pub fn new(graph: UnGraph<(), ()>, root: NodeIndex) -> Self {
+        let n = graph.node_count();
+        let levels = LCA::log2(n);
         let mut lca = LCA {
-            jump_table: vec![vec![usize::MAX; graph.size()]; levels],
-            depth: vec![usize::MAX; graph.size()],
+            jump_table: vec![vec![usize::MAX; n]; levels],
+            depth: vec![usize::MAX; n],
         };
 
         // Init jump table by BFS from root.
         let mut queue = std::collections::VecDeque::new();
         queue.push_back(root);
-        lca.depth[root] = 0;
+        lca.depth[root.index()] = 0;
 
         // Explore a vertex 'u' in the BFS.
         let mut explore = |u| {
             let mut to_explore = Vec::new();
-            for &v in graph.edges(u) {
-                if lca.depth[v] == usize::MAX {
+            for v in graph.neighbors(u) {
+                if lca.depth[v.index()] == usize::MAX {
                     to_explore.push(v);
-                    lca.depth[v] = lca.depth[u] + 1;
-                    lca.jump_table[0][v] = u;
+                    lca.depth[v.index()] = lca.depth[u.index()] + 1;
+                    lca.jump_table[0][v.index()] = u.index();
                     for i in 1..levels {
-                        let ancestor = lca.jump_table[i - 1][v];
+                        let ancestor = lca.jump_table[i - 1][v.index()];
                         if ancestor != usize::MAX {
-                            lca.jump_table[i][v] = lca.jump_table[i - 1][ancestor]
+                            lca.jump_table[i][v.index()] = lca.jump_table[i - 1][ancestor]
                         }
                     }
                 }
@@ -105,7 +106,7 @@ impl LCA {
 #[cfg(test)]
 mod tests {
     use super::LCA;
-    use crate::graph::Graph;
+    use petgraph::graph::UnGraph;
 
     /// Construct the following graph:
     ///
@@ -114,17 +115,14 @@ mod tests {
     ///       1     2
     ///      / \   / \
     ///     3   4 5   6
-    fn simple_graph() -> Graph {
-        let mut g = Graph::new(7);
-        let edges = [(0, 1), (0, 2), (1, 3), (1, 4), (2, 5), (2, 6)];
-        edges.iter().for_each(|&(u, v)| g.add_edge(u, v));
-        g
+    fn simple_graph() -> UnGraph<(), ()> {
+        UnGraph::from_edges(&[(0, 1), (0, 2), (1, 3), (1, 4), (2, 5), (2, 6)])
     }
 
     #[test]
     fn it_answers_simple_queries() {
         let g = simple_graph();
-        let solver = LCA::new(g, 0);
+        let solver = LCA::new(g, 0.into());
 
         assert_eq!(solver.lca(0, 1), 0);
         assert_eq!(solver.lca(0, 3), 0);
