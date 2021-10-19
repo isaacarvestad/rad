@@ -19,3 +19,4 @@ cargo build && cargo test
   - [x] Shortest path/distance with non-negative edge weights (Dijkstra)
   - [ ] Shortest path/distance between two vertices (Bellman-Ford)
   - [ ] All pairs shortest path (Floyd-Warshall)
+- [x] Heap
