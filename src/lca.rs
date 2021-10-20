@@ -132,4 +132,19 @@ mod tests {
         assert_eq!(solver.lca(5, 6), 2);
         assert_eq!(solver.lca(3, 5), 0);
     }
+
+    #[test]
+    fn log2_with_powers_of_two() {
+        for i in 0..16 {
+            assert_eq!(LCA::log2(1 << i), i)
+        }
+    }
+
+    #[test]
+    fn log2_rounds_up() {
+        for i in 2..16 {
+            assert_eq!(LCA::log2((1 << i) - 1), i);
+            assert_eq!(LCA::log2((1 << i) + 1), i + 1);
+        }
+    }
 }
